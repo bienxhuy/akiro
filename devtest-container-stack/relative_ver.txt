@@ -1,0 +1,52 @@
+version: "3.9"
+
+services:
+  influxdb3:
+    image: influxdb:3-core
+    container_name: influxdb3
+    ports:
+      - "8181:8181"
+    command:
+      - influxdb3
+      - serve
+      - --node-id
+      - devtestdb
+      - --object-store
+      - file
+      - --data-dir
+      - /var/lib/influxdb/data
+      - --plugin-dir
+      - /var/lib/influxdb/plugins
+    volumes:
+      - ./influxdb/data:/var/lib/influxdb/data
+      - ./influxdb/plugins:/var/lib/influxdb/plugins
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana-oss
+    container_name: grafana
+    ports:
+      - "9090:3000"
+    volumes:
+      - ./grafana:/var/lib/grafana
+    restart: unless-stopped
+
+  devpi:
+    image: muccg/devpi
+    container_name: devpi
+    ports:
+      - "3141:3141"
+    environment:
+      DEVPI_PASSWORD: devpirootpasswrod
+    volumes:
+      - ./devpi:/data
+    restart: unless-stopped
+
+  verdaccio:
+    image: verdaccio/verdaccio
+    container_name: verdaccio
+    ports:
+      - "4873:4873"
+    volumes:
+      - ./verdaccio:/verdaccio/storage
+    restart: unless-stopped
