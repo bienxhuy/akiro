@@ -1,10 +1,14 @@
 pipeline {
     agent any
 
+    triggers {
+        cron('0 0 * * *')
+    }
+
     parameters {
         string(name: 'BRANCH', defaultValue: 'master', description: 'Define which branch to run test on.')
-        string(name: 'AUTHOR', defaultValue: 'owner', description: 'The one who starts the build.')
-        string(name: 'HOST', defaultValue: 'bienxhuy-PC', description: 'Define the host for the test run.')
+        string(name: 'AUTHOR', defaultValue: 'jenkins', description: 'The one who starts the build.')
+        string(name: 'HOST', defaultValue: 'jenkins', description: 'Define the host for the test run.')
         string(name: 'PERFORMANCE_RUN_TIME', defaultValue: '2m', description: 'Define the runtime for the performance test.')
         string(name: 'PERFORMANCE_USERS', defaultValue: '20', description: 'Define the number of users for the performance test.')
         string(name: 'PERFORMANCE_SPAWN_RATE', defaultValue: '5', description: 'Define the spawn rate for the performance test.')
@@ -19,21 +23,25 @@ pipeline {
     environment {
         DOCKER_NETWORK = 'devtest-container-stack_default'
 
+        // Config container name based on BUILD_NUMBER
         BE_PORT = '3000'
         FE_PORT  = '4173'
 
         BE_IMAGE = 'node:22.16.0'
         FE_IMAGE  = "${BE_IMAGE}"
 
-        BE_CONTAINER_NAME = 'be'
-        FE_CONTAINER_NAME  = 'fe'
-        TEST_CONTAINER = 'devtest'
+        BE_CONTAINER_NAME = "be-${BUILD_NUMBER}"
+        FE_CONTAINER_NAME  = "fe-${BUILD_NUMBER}"
+        TEST_CONTAINER = "devtest-${BUILD_NUMBER}"
+        
+        COMPOSE_PROJECT_NAME="pipeline_${BUILD_NUMBER}"
+        DOCKER_VOLUME="src-code-${BUILD_NUMBER}"
 
         // Backend environment variables
         NODE_ENV='development'
         CLIENT_ORIGIN="http://${FE_CONTAINER_NAME}:${FE_PORT}"
 
-        DB_HOST='backend-postgres'
+        DB_HOST="${COMPOSE_PROJECT_NAME}-postgres-1"
         DB_PORT=5432
         DB_NAME='demosutdb'
         DB_USER='postgres'
@@ -69,44 +77,22 @@ pipeline {
             parallel {
                 stage('Prepare Dev Instance') {
                     steps {
-                        // Pull Node.js Docker image
-                        echo 'Pulling Node.js Docker image...'
+                        // Create a named volume
+                        echo 'Creating named volume...'
                         echo '-----------------------------------'
-                        bat "docker pull ${BE_IMAGE}"
-                        echo 'Node.js image pulled successfully.'
-                        echo '-----------------------------------'
-
-                        // Run Node.js container in the existing network
-                        echo 'Starting backend instance container...'
-                        echo '-----------------------------------'
-                        echo "DOCKER_NETWORK:         ${DOCKER_NETWORK}"
-                        echo "BE_CONTAINER_NAME:           ${BE_CONTAINER_NAME}"
-                        echo "BE_PORT:                ${BE_PORT}"
-                        echo "NODE_ENV:               ${NODE_ENV}"
-                        echo "CLIENT_ORIGIN:          ${CLIENT_ORIGIN}"
-                        echo "DB_HOST:                ${DB_HOST}"
-                        echo "DB_PORT:                ${DB_PORT}"
-                        echo "DB_NAME:                ${DB_NAME}"
-                        echo "DB_USER:                ${DB_USER}"
-                        echo "DB_PASSWORD:            ${DB_PASSWORD}"
-                        echo "JWT_ACCESS_SECRET:      ${JWT_ACCESS_SECRET}"
-                        echo "JWT_ACCESS_EXPIRES_IN:  ${JWT_ACCESS_EXPIRES_IN}"
-                        echo "JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN}"
-                        echo '-----------------------------------'
-                        bat "docker run -d --name ${BE_CONTAINER_NAME} --network ${DOCKER_NETWORK} -p ${BE_PORT}:${BE_PORT} -v %WORKSPACE%:/app -e NODE_ENV=${NODE_ENV} -e CLIENT_ORIGIN=${CLIENT_ORIGIN} -e DB_HOST=${DB_HOST} -e DB_PORT=${DB_PORT} -e DB_NAME=${DB_NAME} -e DB_USER=${DB_USER} -e DB_PASSWORD=${DB_PASSWORD} -e JWT_ACCESS_SECRET=${JWT_ACCESS_SECRET} -e JWT_ACCESS_EXPIRES_IN=${JWT_ACCESS_EXPIRES_IN} -e JWT_REFRESH_EXPIRES_IN=${JWT_REFRESH_EXPIRES_IN} -w /app ${BE_IMAGE} tail -f /dev/null"
-                        echo 'Backend instance container started successfully.'
+                        bat "docker volume create ${DOCKER_VOLUME}"
+                        echo 'Named volume created successfully.'
                         echo '-----------------------------------'
 
-                        // Clone the repository inside the container
-                        echo 'Cloning repository...'
+                        // Use a temporary container to clone the repository into the named volume
+                        echo 'Cloning repository into named volume...'
                         echo '-----------------------------------'
-                        echo "BE_CONTAINER_NAME:   ${BE_CONTAINER_NAME}"
                         echo "BRANCH:         ${BRANCH}"
                         echo '-----------------------------------'
                         withCredentials([usernamePassword(credentialsId: 'devtest', usernameVariable: 'GIT_USERNAME', passwordVariable: 'GIT_TOKEN')]) {
-                            bat "docker exec ${BE_CONTAINER_NAME} git clone -b ${BRANCH} https://%GIT_USERNAME%:%GIT_TOKEN%@github.com/bienxhuy/quotie.git /app/dev-instance"
+                            bat "docker run --rm -v ${DOCKER_VOLUME}:/app ${BE_IMAGE} sh -c \"git clone -b ${BRANCH} https://%GIT_USERNAME%:%GIT_TOKEN%@github.com/bienxhuy/quotie.git /app/dev-instance\""
                         }
-                        echo 'Repository cloned successfully.'
+                        echo 'Repository cloned into named volume successfully.'
                         echo '-----------------------------------'
                     }
                 }
@@ -139,7 +125,7 @@ pipeline {
                         echo "INFLUXDB_HOST:                ${INFLUXDB_HOST}"
                         echo "INFLUXDB_DATABASE:            ${INFLUXDB_DATABASE}"
                         echo '-----------------------------------'
-                        bat "docker run -d --name ${TEST_CONTAINER} --network ${DOCKER_NETWORK} -e BE_URL=${BE_URL} -e FE_URL=${FE_URL} -e BROWSER=${BROWSER} -e LOG_DIR=${FRAMEWORK_LOG_DIR} -e SCREENSHOT_DIR=${FRAMEWORK_SCREENSHOT_DIR} -e UNIT_JUNIT_PATH=${UNIT_JUNIT_PATH} -e API_JUNIT_PATH=${API_JUNIT_PATH} -e E2E_JUNIT_PATH=${E2E_JUNIT_PATH} -e PERF_SEEDED_USER_EMAIL=${PERF_SEEDED_USER_EMAIL} -e PERF_SEEDED_USER_PASSWORD=${PERF_SEEDED_USER_PASSWORD} -e PERFORMANCE_RUN_TIME=${PERFORMANCE_RUN_TIME} -e PERFORMANCE_USERS=${PERFORMANCE_USERS} -e PERFORMANCE_SPAWN_RATE=${PERFORMANCE_SPAWN_RATE} -e TIMESTAMP=${TIMESTAMP} -e INFLUX_HOST=${INFLUXDB_HOST} -e INFLUX_TOKEN=%INFLUXDB_TOKEN% -e INFLUX_DATABASE=${INFLUXDB_DATABASE} -e BUILD_NUMBER=${env.BUILD_NUMBER} -e BUILD_URL=${env.BUILD_URL} -e BRANCH=${env.BRANCH} -e AUTHOR=${env.AUTHOR} -e HOST=${env.HOST} -v %WORKSPACE%:/app -w /app python-chrome tail -f /dev/null"
+                        bat "docker run -d --name ${TEST_CONTAINER} --network ${DOCKER_NETWORK} -e BE_URL=${BE_URL} -e FE_URL=${FE_URL} -e BROWSER=${BROWSER} -e LOG_DIR=${FRAMEWORK_LOG_DIR} -e SCREENSHOT_DIR=${FRAMEWORK_SCREENSHOT_DIR} -e UNIT_JUNIT_PATH=${UNIT_JUNIT_PATH} -e API_JUNIT_PATH=${API_JUNIT_PATH} -e E2E_JUNIT_PATH=${E2E_JUNIT_PATH} -e PERF_SEEDED_USER_EMAIL=${PERF_SEEDED_USER_EMAIL} -e PERF_SEEDED_USER_PASSWORD=${PERF_SEEDED_USER_PASSWORD} -e PERFORMANCE_RUN_TIME=${PERFORMANCE_RUN_TIME} -e PERFORMANCE_USERS=${PERFORMANCE_USERS} -e PERFORMANCE_SPAWN_RATE=${PERFORMANCE_SPAWN_RATE} -e TIMESTAMP=${TIMESTAMP} -e INFLUX_HOST=${INFLUXDB_HOST} -e INFLUX_TOKEN=%INFLUXDB_TOKEN% -e INFLUX_DATABASE=${INFLUXDB_DATABASE} -e BUILD_NUMBER=${env.BUILD_NUMBER} -e BUILD_URL=${env.BUILD_URL} -e BRANCH=${env.BRANCH} -e AUTHOR=${env.AUTHOR} -e HOST=${env.HOST} -w /app python-chrome tail -f /dev/null"
                         echo 'Test instance container started successfully.'
                         echo '-----------------------------------'
 
@@ -161,6 +147,35 @@ pipeline {
             parallel {
                 stage('Prepare Backend Container') {
                     steps {
+                        echo 'Pulling Node.js Docker image...'
+                        echo '-----------------------------------'
+                        bat "docker pull ${BE_IMAGE}"
+                        echo 'Node.js image pulled successfully.'
+                        echo '-----------------------------------'
+
+
+                        // Run Node.js container in the existing network
+                        echo 'Starting backend instance container...'
+                        echo '-----------------------------------'
+                        echo "DOCKER_NETWORK:         ${DOCKER_NETWORK}"
+                        echo "DOCKER_VOLUME:          ${DOCKER_VOLUME}"
+                        echo "BE_CONTAINER_NAME:      ${BE_CONTAINER_NAME}"
+                        echo "NODE_ENV:               ${NODE_ENV}"
+                        echo "CLIENT_ORIGIN:          ${CLIENT_ORIGIN}"
+                        echo "DB_HOST:                ${DB_HOST}"
+                        echo "DB_PORT:                ${DB_PORT}"
+                        echo "DB_NAME:                ${DB_NAME}"
+                        echo "DB_USER:                ${DB_USER}"
+                        echo "DB_PASSWORD:            ${DB_PASSWORD}"
+                        echo "JWT_ACCESS_SECRET:      ${JWT_ACCESS_SECRET}"
+                        echo "JWT_ACCESS_EXPIRES_IN:  ${JWT_ACCESS_EXPIRES_IN}"
+                        echo "JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN}"
+                        echo '-----------------------------------'
+                        bat "docker run -d --name ${BE_CONTAINER_NAME} --network ${DOCKER_NETWORK} -v ${DOCKER_VOLUME}:/app -v /app/dev-instance/backend/node_modules -e NODE_ENV=${NODE_ENV} -e CLIENT_ORIGIN=${CLIENT_ORIGIN} -e DB_HOST=${DB_HOST} -e DB_PORT=${DB_PORT} -e DB_NAME=${DB_NAME} -e DB_USER=${DB_USER} -e DB_PASSWORD=${DB_PASSWORD} -e JWT_ACCESS_SECRET=${JWT_ACCESS_SECRET} -e JWT_ACCESS_EXPIRES_IN=${JWT_ACCESS_EXPIRES_IN} -e JWT_REFRESH_EXPIRES_IN=${JWT_REFRESH_EXPIRES_IN} -w /app ${BE_IMAGE} tail -f /dev/null"
+                        echo 'Backend instance container started successfully.'
+                        echo '-----------------------------------'
+
+                        // Install backend dependencies, run migrations and start the server
                         echo 'Setting up local CDN for backend...'
                         echo '-----------------------------------'
                         bat "docker exec ${BE_CONTAINER_NAME} bash -c \"cd /app/dev-instance/backend && npm set registry http://verdaccio:4873/\""
@@ -173,17 +188,45 @@ pipeline {
                         echo 'Backend dependencies installed successfully.'
                         echo '-----------------------------------'
 
+
+                        echo 'Extracting DB configuration to Host...'
+                        echo '-----------------------------------'
+                        echo "BE_CONTAINER_NAME:  ${BE_CONTAINER_NAME}"
+                        echo "WORKSPACE:          ${WORKSPACE}"
+                        echo '-----------------------------------'
+                        bat "mkdir %WORKSPACE%\\db-config"
+                        bat "docker cp ${BE_CONTAINER_NAME}:/app/dev-instance/backend/db %WORKSPACE%\\db-config"
+
+                        echo 'Starting DB from Host...'
+                        echo '-----------------------------------'
+                        echo "COMPOSE_PROJECT_NAME: ${COMPOSE_PROJECT_NAME}"
+                        echo '-----------------------------------'
+                        bat "cd /d %WORKSPACE%\\db-config\\db && set \"COMPOSE_PROJECT_NAME=${COMPOSE_PROJECT_NAME}\" && docker compose up -d"
+                        
+                        // Sleep for 20 seconds to ensure the database is up before running migrations
+                        sleep(time: 20, unit: 'SECONDS')
+
                         echo 'Running database migrations...'
                         echo '-----------------------------------'
                         echo "BE_CONTAINER_NAME:  ${BE_CONTAINER_NAME}"
                         echo '-----------------------------------'
-                        bat "cd /d %WORKSPACE%\\dev-instance\\backend && docker compose -f db\\docker-compose.yml up -d"
-                        // Sleep for 20 seconds to ensure the database is up before running migrations
-                        sleep(time: 20, unit: 'SECONDS')
                         bat "docker exec ${BE_CONTAINER_NAME} bash -c \"cd /app/dev-instance/backend && npm run migration:run\""
-                        bat "cd /d %WORKSPACE%\\dev-instance\\backend && docker exec -i backend-postgres psql -U postgres -d demosutdb < db\\seed.sql"
                         echo 'Database migrations completed successfully.'
                         echo '-----------------------------------'
+
+                        echo 'Extracting seed.sql from Volume to Host...'
+                        echo '-----------------------------------'
+                        echo "BE_CONTAINER_NAME:  ${BE_CONTAINER_NAME}"
+                        echo "WORKSPACE:          ${WORKSPACE}"
+                        echo '-----------------------------------'
+                        bat "docker cp ${BE_CONTAINER_NAME}:/app/dev-instance/backend/db/seed.sql %WORKSPACE%\\seed.sql"
+
+                        
+                        echo 'Injecting seed data into Postgres Container...'
+                        echo '-----------------------------------'
+                        echo "DB_HOST:           ${DB_HOST}"
+                        echo '-----------------------------------'
+                        bat "docker exec -i ${DB_HOST} psql -U postgres -d demosutdb < %WORKSPACE%\\seed.sql"
 
                         echo 'Building application...'
                         echo '-----------------------------------'
@@ -216,11 +259,10 @@ pipeline {
                         echo 'Starting frontend instance container...'
                         echo '-----------------------------------'
                         echo "DOCKER_NETWORK:         ${DOCKER_NETWORK}"
-                        echo "FE_CONTAINER_NAME:           ${FE_CONTAINER_NAME}"
-                        echo "FE_PORT:                ${FE_PORT}"
+                        echo "FE_CONTAINER_NAME:      ${FE_CONTAINER_NAME}"
                         echo "VITE_API_URL:           ${VITE_API_URL}"
                         echo '-----------------------------------'
-                        bat "docker run -d --name ${FE_CONTAINER_NAME} --network ${DOCKER_NETWORK} -p ${FE_PORT}:${FE_PORT} -v %WORKSPACE%:/app -e VITE_API_URL=${VITE_API_URL} -w /app ${FE_IMAGE} tail -f /dev/null"
+                        bat "docker run -d --name ${FE_CONTAINER_NAME} --network ${DOCKER_NETWORK} -v ${DOCKER_VOLUME}:/app -v /app/dev-instance/frontend/node_modules -e VITE_API_URL=${VITE_API_URL} -w /app ${FE_IMAGE} tail -f /dev/null"
                         echo 'Frontend instance container started successfully.'
                         echo '-----------------------------------'
 
@@ -317,8 +359,6 @@ pipeline {
 
         stage('Post Execution') {
             steps {
-                input message: 'Do you want to run post execution script?', ok: 'Yes, run it!'
-
                 echo 'Starting post execution script...'
                 echo '-----------------------------------'
                 echo "TEST_CONTAINER:    ${TEST_CONTAINER}"
@@ -344,32 +384,42 @@ pipeline {
             echo "TEST_CONTAINER:       ${TEST_CONTAINER}"
             echo '-----------------------------------'
 
+            // Copy artifacts from test container to Jenkins workspace before stopping the container
+            echo 'Copying logs and screenshots from test container to Jenkins workspace...'
+            echo '-----------------------------------'
+            bat "mkdir %WORKSPACE%\\devtest"
+            bat "docker cp ${TEST_CONTAINER}:/app/devtest/reports %WORKSPACE%\\devtest\\reports"
+
             // Stop and remove the database compose stack
             catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
-                bat "cd /d %WORKSPACE%\\dev-instance\\backend && docker compose -f db\\docker-compose.yml down -v"
+                bat "cd /d %WORKSPACE%\\db-config\\db && set \"COMPOSE_PROJECT_NAME=${COMPOSE_PROJECT_NAME}\" && docker compose down -v"
             }
 
-            // Stop and remove only the dev and test containers
+            // Stop and remove the dev and test containers
             catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
                 bat "docker stop ${BE_CONTAINER_NAME} || echo 'Error stopping ${BE_CONTAINER_NAME}'"
-                bat "docker rm ${BE_CONTAINER_NAME} || echo 'Error removing ${BE_CONTAINER_NAME}'"
+                bat "docker rm -v ${BE_CONTAINER_NAME} || echo 'Error removing ${BE_CONTAINER_NAME}'"
             }
             echo 'Backend instance container stopped and removed.'
             echo '-----------------------------------'
 
             catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
                 bat "docker stop ${FE_CONTAINER_NAME} || echo 'Error stopping ${FE_CONTAINER_NAME}'"
-                bat "docker rm ${FE_CONTAINER_NAME} || echo 'Error removing ${FE_CONTAINER_NAME}'"
+                bat "docker rm -v ${FE_CONTAINER_NAME} || echo 'Error removing ${FE_CONTAINER_NAME}'"
             }
             echo 'Frontend instance container stopped and removed.'
             echo '-----------------------------------'
 
             catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
                 bat "docker stop ${TEST_CONTAINER} || echo 'Error stopping ${TEST_CONTAINER}'"
-                bat "docker rm ${TEST_CONTAINER} || echo 'Error removing ${TEST_CONTAINER}'"
+                bat "docker rm -v ${TEST_CONTAINER} || echo 'Error removing ${TEST_CONTAINER}'"
             }
             echo 'Test instance container stopped and removed.'
             echo '-----------------------------------'
+
+            catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+                bat "docker volume rm ${DOCKER_VOLUME} || echo 'Volume already removed'"
+            }
 
             // Archive logs, screenshots, parse test result temporary
             echo 'Archiving logs, screenshots and parsing test result temporary.'
