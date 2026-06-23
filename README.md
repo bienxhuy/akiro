@@ -33,6 +33,7 @@ The pipeline defined in this repository clones both `devtest` and `quotie` at ru
 
 ![High Level Design]()
 
+**Main Flow:**
 
 ```
 GitHub Push / Manual Trigger / Cron
