@@ -1,0 +1,72 @@
+# Persistent Containers
+
+This directory contains the Docker Compose file for the four services that run persistently on the host machine — independent of any individual pipeline run.
+
+---
+
+## Services
+
+| Container | Image | Port | Purpose |
+|-----------|-------|------|---------|
+| `influxdb3` | `influxdb:3-core` | `8181` | Time-series database storing all test execution metrics (build summaries, suite results, failed tests, performance data) |
+| `grafana` | `grafana/grafana-oss` | `9090 → 3000` | Dashboard for visualizing test results, build trends, and quality metrics |
+| `devpi` | `muccg/devpi` | `3141` | Local Python package mirror — caches pip dependencies for the test framework container, reducing repeated downloads from PyPI |
+| `verdaccio` | `verdaccio/verdaccio` | `4873` | Local npm package mirror — caches Node.js dependencies for the SUT containers |
+
+All four containers are connected to the same Docker network as the per-pipeline containers, allowing the test framework to write results to InfluxDB by container name (`influxdb3`) without additional network configuration.
+
+---
+
+## Starting the Services
+
+```bash
+cd akiro-persist-containers
+docker compose up -d
+```
+
+To stop without removing data volumes:
+
+```bash
+docker compose stop
+```
+
+To stop and remove all data (destructive — clears all InfluxDB metrics and Grafana configuration):
+
+```bash
+docker compose down -v
+```
+
+---
+
+## Grafana Access
+
+Once running, Grafana is available at [http://localhost:9090](http://localhost:9090).
+
+Default credentials (as configured in `docker-compose.yml`):
+
+| Field | Value |
+|-------|-------|
+| Username | `akiro` |
+| Password | `akiro2026` |
+
+> Change these credentials in `docker-compose.yml` before deploying in any shared or production environment.
+
+After first login, follow the steps in `../grafana-source/README.md` to connect InfluxDB as a data source and import the dashboard pages.
+
+---
+
+## InfluxDB Access
+
+InfluxDB is available at [http://localhost:8181](http://localhost:8181).
+
+Data is persisted in `./influxdb/data` on the host. The node is configured with ID `devtestdb` and uses local file object storage.
+
+The pipeline writes metrics to the bucket `devtest_metrics` using the token stored in Jenkins Credentials (`influxdb-token`).
+
+---
+
+## Notes
+
+- Data for all services is persisted via bind mounts under `./influxdb`, `./grafana`, `./devpi`, and `./verdaccio` relative to this directory. These directories are created automatically on first run.
+- `grafana` depends on `influxdb3` and will start after it is ready.
+- All other services start independently.
