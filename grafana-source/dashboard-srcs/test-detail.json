@@ -24,7 +24,7 @@
     {
       "datasource": {
         "type": "influxdb",
-        "uid": "efo4xwk1g8bgga"
+        "uid": "abcxyz-influxdb-datasource-to-be-replaced"
       },
       "fieldConfig": {
         "defaults": {
@@ -158,7 +158,7 @@
     {
       "datasource": {
         "type": "influxdb",
-        "uid": "efo4xwk1g8bgga"
+        "uid": "abcxyz-influxdb-datasource-to-be-replaced"
       },
       "fieldConfig": {
         "defaults": {},
@@ -240,7 +240,7 @@
         "baseFilters": [],
         "datasource": {
           "type": "influxdb",
-          "uid": "efo4xwk1g8bgga"
+          "uid": "abcxyz-influxdb-datasource-to-be-replaced"
         },
         "filters": [],
         "name": "Filters",
