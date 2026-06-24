@@ -32,7 +32,7 @@ The push-mode pipeline is triggered automatically when a commit is pushed to Git
 
 ### 3.1 Generic Webhook Trigger Configuration
 
-In the Jenkins pipeline job, under **Build Triggers → Generic Webhook Trigger**:
+At this point, you need to already create a Jenkins pipeline job. In the pipeline configuration, under **Build Triggers → Generic Webhook Trigger**:
 
 1. Enable **Generic Webhook Trigger**.
 
@@ -84,7 +84,7 @@ In the Jenkins pipeline job, under **Build Triggers → Generic Webhook Trigger*
 
 ## 4. Pipeline Job Setup
 
-1. In Jenkins, create a new **Pipeline** job.
+1. Navigate to the **Pipeline** job configuration page.
 2. Under **Pipeline → Definition**, select **Pipeline script from SCM**.
 3. Set **SCM** to Git and enter the URL of this repository (`akiro`).
 4. Set **Script Path** to `Jenkinsfile`.

@@ -91,3 +91,5 @@ Refer to `JenkinsPipelineConfiguration.md` for Jenkins-specific setup steps and 
 4. Import Grafana dashboards: see `grafana-source/README.md`.
 5. Configure Jenkins: see `JenkinsPipelineConfiguration.md`.
 6. Point the Jenkins pipeline to this repository's `Jenkinsfile`.
+
+> **Note:** The first pipeline run will fail — Jenkins needs to load the `Jenkinsfile` once to register the defined parameters. Trigger a second run to execute normally.

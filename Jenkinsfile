@@ -21,7 +21,7 @@ pipeline {
     }
 
     environment {
-        DOCKER_NETWORK = 'akiro-persist-containers'
+        DOCKER_NETWORK = 'akiro-persist-containers_default'
 
         // Config container name based on BUILD_NUMBER
         BE_PORT = '3000'
