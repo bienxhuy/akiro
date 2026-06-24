@@ -61,7 +61,27 @@ InfluxDB is available at [http://localhost:8181](http://localhost:8181).
 
 Data is persisted in `./influxdb/data` on the host. The node is configured with ID `devtestdb` and uses local file object storage.
 
-The pipeline writes metrics to the bucket `devtest_metrics` using the token stored in Jenkins Credentials (`influxdb-token`).
+### Creating the Operator Token
+
+InfluxDB 3 Core uses token-based authorization — all CLI commands and HTTP requests require a token. After starting the containers for the first time, create the operator token (named `_admin`, grants access to all actions):
+
+```bash
+docker exec influxdb3 influxdb3 create token --admin
+```
+
+Copy the token from the output — **it will not be shown again.**
+
+To use the token in subsequent CLI commands inside the container, set the environment variable:
+
+```bash
+export INFLUXDB3_AUTH_TOKEN=YOUR_TOKEN
+```
+
+Or pass it inline per command with `--token YOUR_TOKEN`.
+
+Once you have the token, store it in:
+- Jenkins Credentials as `influxdb-token` (see `../JenkinsPipelineConfiguration.md`)
+- Grafana data source configuration (see `../grafana-source/README.md`)
 
 ---
 
