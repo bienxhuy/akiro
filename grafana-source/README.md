@@ -30,8 +30,9 @@ Navigation between pages is handled automatically via Grafana data links — cli
 | Name | `InfluxDB` |
 | Query language | `SQL` |
 | URL | `http://influxdb3:8181` |
-| Token | Your InfluxDB API token (same as `influxdb-token` in Jenkins Credentials) |
+| Token | Your InfluxDB API token (same as `influxdb-token` in Jenkins Credentials; see [InfluxDB Access](../akiro-persist-containers/README.md#influxdb-access)) |
 | Database | `devtest_metrics` |
+| Insecure Connection | toggle ON |
 
 5. Click **Save & Test**. You should see a confirmation that the data source is working.
 
@@ -43,7 +44,7 @@ Navigation between pages is handled automatically via Grafana data links — cli
 
 Import each JSON file individually:
 
-1. In Grafana, go to **Dashboards → Import**.
+1. In Grafana, go to **Dashboards → New → Import**.
 2. Click **Upload dashboard JSON file** and select a file from this directory.
 3. Select the `InfluxDB` data source configured in Step 1 when prompted.
 4. Click **Import**.
@@ -55,27 +56,3 @@ Repeat for all five JSON files. The recommended import order follows the navigat
 3. `xml-suite-detail.json`
 4. `performance-detail.json`
 5. `test-detail.json`
-
----
-
-## Step 3 — Verify Navigation Links
-
-After importing all pages, open the **Home** dashboard and verify that:
-
-- The build history chart is populated (requires at least one completed pipeline run).
-- Clicking a build ID navigates to the **Build detail** page.
-- Navigating from build detail to suite detail and test detail works as expected.
-
-If data links appear broken after import, check that the dashboard UIDs match the ones referenced in each JSON file's data link configuration. Re-exporting and re-importing the affected pages typically resolves UID mismatches.
-
----
-
-## Exporting Updated Dashboards
-
-When modifying a dashboard, export the updated JSON to keep this directory in sync:
-
-1. Open the dashboard in Grafana.
-2. Go to **Dashboard settings (gear icon) → JSON Model**.
-3. Copy the JSON and replace the corresponding file in this directory.
-
-Commit the updated file to version-control the dashboard change.
