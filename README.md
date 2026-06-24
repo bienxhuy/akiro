@@ -77,14 +77,14 @@ The following must be installed and running on the host machine before using thi
 - Node.js (for SUT dependency resolution via Verdaccio) (v22.16.0)
 - Python 3.12+ (for test framework dependency resolution via Devpi) (v3.12.10)
 
-Refer to `JenkinsPipelineConfiguration.md` for Jenkins-specific setup steps and `persist-containers/` for starting the persistent infrastructure services.
+Refer to `JenkinsPipelineConfiguration.md` for Jenkins-specific setup steps and `akiro-persist-containers/` for starting the persistent infrastructure services.
 
 ---
 
 ## Quick Start
 
 1. Clone this repository onto the Jenkins host machine.
-2. Start persistent services: see `persist-containers/README.md`.
+2. Start persistent services: see `akiro-persist-containers/README.md`.
 3. Build the Python + browser driver image: see `pythonwdriver/README.md`.
 4. Import Grafana dashboards: see `grafana-source/README.md`.
 5. Configure Jenkins: see `JenkinsPipelineConfiguration.md`.

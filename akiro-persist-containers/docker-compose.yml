@@ -2,7 +2,7 @@ version: "3.9"
 
 services:
   influxdb3:
-    image: influxdb:3-core
+    image: influxdb:3.3.0
     container_name: influxdb3
     ports:
       - "8181:8181"
@@ -23,7 +23,7 @@ services:
     restart: unless-stopped
 
   grafana:
-    image: grafana/grafana-oss
+    image: grafana/grafana-oss:12.1.0
     container_name: grafana
     ports:
       - "9090:3000"
@@ -48,7 +48,7 @@ services:
     restart: unless-stopped
 
   verdaccio:
-    image: verdaccio/verdaccio
+    image: verdaccio/verdaccio:6.2.0
     container_name: verdaccio
     ports:
       - "4873:4873"

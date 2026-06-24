@@ -6,12 +6,12 @@ This directory contains the Docker Compose file for the four services that run p
 
 ## Services
 
-| Container | Image | Port | Purpose |
-|-----------|-------|------|---------|
-| `influxdb3` | `influxdb:3-core` | `8181` | Time-series database storing all test execution metrics (build summaries, suite results, failed tests, performance data) |
-| `grafana` | `grafana/grafana-oss` | `9090 → 3000` | Dashboard for visualizing test results, build trends, and quality metrics |
-| `devpi` | `muccg/devpi` | `3141` | Local Python package mirror — caches pip dependencies for the test framework container, reducing repeated downloads from PyPI |
-| `verdaccio` | `verdaccio/verdaccio` | `4873` | Local npm package mirror — caches Node.js dependencies for the SUT containers |
+| Container | Image | Verified version | Port | Purpose |
+|-----------|-------|-----------------|------|---------|
+| `influxdb3` | `influxdb:3.3.0` | 3.3.0 | `8181` | Time-series database storing all test execution metrics (build summaries, suite results, failed tests, performance data) |
+| `grafana` | `grafana/grafana-oss:12.1.0` | 12.1.0 | `9090 → 3000` | Dashboard for visualizing test results, build trends, and quality metrics |
+| `devpi` | `muccg/devpi` | devpi-server 4.5.0 (no versioned tags published by maintainer) | `3141` | Local Python package mirror — caches pip dependencies for the test framework container, reducing repeated downloads from PyPI |
+| `verdaccio` | `verdaccio/verdaccio:6.2.0` | 6.2.0 | `4873` | Local npm package mirror — caches Node.js dependencies for the SUT containers |
 
 All four containers are connected to the same Docker network as the per-pipeline containers, allowing the test framework to write results to InfluxDB by container name (`influxdb3`) without additional network configuration.
 
