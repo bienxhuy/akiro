@@ -1,1 +1,5 @@
 .env
+/akiro-persist-containers/devpi
+/akiro-persist-containers/grafana
+/akiro-persist-containers/influxdb
+/akiro-persist-containers/verdaccio
