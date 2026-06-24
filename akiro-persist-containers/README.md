@@ -83,6 +83,14 @@ Once you have the token, store it in:
 - Jenkins Credentials as `influxdb-token` (see `../JenkinsPipelineConfiguration.md`)
 - Grafana data source configuration (see `../grafana-source/README.md`)
 
+### Creating the Database
+
+The Grafana dashboards require a pre-existing database to connect to. Create the `devtest_metrics` database before importing dashboards:
+
+```bash
+docker exec influxdb3 influxdb3 create database devtest_metrics --token YOUR_TOKEN
+```
+
 ---
 
 ## Notes
