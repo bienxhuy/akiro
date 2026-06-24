@@ -1,6 +1,6 @@
 # Overview
 
-**akiro** is the infrastructure repository for the Automated Testing Infrastructure (ATI) — a self-hosted system that orchestrates automated test execution, environment provisioning, result processing, and quality monitoring.
+**akiro** is the infrastructure repository for the Automated Testing Infrastructure (ATI) - a self-hosted system that orchestrates automated test execution, environment provisioning, result processing, and quality monitoring.
 
 This repository contains the Jenkins pipeline definition, persistent service configurations, browser driver images, and Grafana dashboard sources that form the operational backbone of the ATI.
 
@@ -31,7 +31,9 @@ The pipeline defined in this repository clones both `devtest` and `quotie` at ru
 
 ## System Overview
 
-![High Level Design]()
+**High Level Design**
+
+![High Level Design](.images/devtest-hld.drawio.png)
 
 **Main Flow:**
 
@@ -55,7 +57,7 @@ GitHub Push / Manual Trigger / Cron
         Grafana Dashboard (5 pages: build health → suite detail → test detail)
 ```
 
-### Execution Modes
+**Execution Modes**
 
 | Mode | Trigger | Suites Executed |
 |------|---------|-----------------|
@@ -67,13 +69,13 @@ GitHub Push / Manual Trigger / Cron
 
 ## Host Requirements
 
-The following must be installed and running on the host machine before using this repository:
+The following must be installed and running on the host machine before using this repository, the exact version that the author used will also be shown:
 
-- Docker Engine
-- Jenkins (with Generic Webhook Trigger plugin installed)
-- Smee.io client (for webhook relay from GitHub to local Jenkins)
-- Node.js (for SUT dependency resolution via Verdaccio)
-- Python 3.12+ (for test framework dependency resolution via Devpi)
+- Docker Engine (v28.3.2)
+- Jenkins (with Generic Webhook Trigger plugin installed) (v2.516.1)
+- Smee.io client (for webhook relay from GitHub to local Jenkins) (v4.3.1)
+- Node.js (for SUT dependency resolution via Verdaccio) (v22.16.0)
+- Python 3.12+ (for test framework dependency resolution via Devpi) (v3.12.10)
 
 Refer to `JenkinsPipelineConfiguration.md` for Jenkins-specific setup steps and `persist-containers/` for starting the persistent infrastructure services.
 
