@@ -40,14 +40,28 @@ Navigation between pages is handled automatically via Grafana data links — cli
 
 ---
 
-## Step 2 — Import Dashboard Pages
+## Step 2 — Replace Datasource UID in Dashboard JSON Files
+
+The dashboard JSON files use the placeholder `abcxyz-influxdb-datasource-to-be-replaced` for the InfluxDB datasource UID. Replace it with the actual UID assigned to your datasource before importing.
+
+1. Find your datasource UID in Grafana: go to **Connections → Data sources → InfluxDB** and copy the UID from the browser URL bar (the string after `/edit/`).
+
+2. In the `grafana-source/dashboard-srcs/` directory, run the following command to replace the placeholder in all JSON files:
+
+   **Windows PowerShell:**
+```powershell
+foreach ($f in Get-ChildItem *.json) { $c = Get-Content $f.FullName -Raw; $c = $c -replace 'abcxyz-influxdb-datasource-to-be-replaced', 'YOUR_UUID'; Set-Content $f.FullName $c }
+```
+
+---
+
+## Step 3 — Import Dashboard Pages
 
 Import each JSON file individually:
 
 1. In Grafana, go to **Dashboards → New → Import**.
 2. Click **Upload dashboard JSON file** and select a file from this directory.
-3. Select the `InfluxDB` data source configured in Step 1 when prompted.
-4. Click **Import**.
+3. Click **Import**.
 
 Repeat for all five JSON files. The recommended import order follows the navigation hierarchy:
 
@@ -57,7 +71,7 @@ Repeat for all five JSON files. The recommended import order follows the navigat
 4. `performance-detail.json`
 5. `test-detail.json`
 
-> After importing, dashboard will show errors because the database currently has no data or schema. Errors will disappear after the 1st run of pipeline
+> After importing, dashboards will show "No data" because the database currently has no data or schema. This will resolve after the first successful pipeline run.
 
 ## Appendix
 
