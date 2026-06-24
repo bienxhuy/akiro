@@ -57,6 +57,8 @@ Repeat for all five JSON files. The recommended import order follows the navigat
 4. `performance-detail.json`
 5. `test-detail.json`
 
+> After importing, dashboard will show errors because the database currently has no data or schema. Errors will disappear after the 1st run of pipeline
+
 ## Appendix
 
 **Home detail page**
