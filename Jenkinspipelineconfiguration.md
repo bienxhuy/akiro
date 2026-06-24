@@ -38,10 +38,11 @@ In the Jenkins pipeline job, under **Build Triggers → Generic Webhook Trigger*
 
 2. Add the following **Post content parameters**:
 
-| Variable | Expression | Expression type | Value filter |
-|----------|------------|-----------------|--------------|
-| `BRANCH` | `$.ref` | JSONPath | `refs/heads/(.*)` |
-| `AUTHOR` | `$.pusher.name` | JSONPath | |
+   | Variable | Expression | Expression type | Value filter | Default value |
+   |----------|------------|-----------------|--------------|---------------|
+   | `BRANCH` | `$.ref` | JSONPath | `refs/heads/(.*)` | main branch |
+   | `AUTHOR` | `$.pusher.name` | JSONPath | none | owner |
+   | `RUN_TYPE` | `$.zzz_no_match` | JSONPath | none | push |
 
 3. Set a **Token** to restrict which requests can trigger this pipeline. The trigger URL becomes:
    ```
