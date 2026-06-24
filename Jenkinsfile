@@ -17,11 +17,11 @@ pipeline {
         choice(name: 'BROWSER', 
             choices: ['chrome-headless','chrome'], description: 'Define the browser for the test run.')
         choice(name: 'RUN_TYPE',
-            choices: ['push', 'nightly','manual'], description: 'Define the type of run.')
+            choices: ['nightly', 'push', 'manual'], description: 'Define the type of run.')
     }
 
     environment {
-        DOCKER_NETWORK = 'devtest-container-stack_default'
+        DOCKER_NETWORK = 'akiro-persist-containers'
 
         // Config container name based on BUILD_NUMBER
         BE_PORT = '3000'
@@ -89,9 +89,7 @@ pipeline {
                         echo '-----------------------------------'
                         echo "BRANCH:         ${BRANCH}"
                         echo '-----------------------------------'
-                        withCredentials([usernamePassword(credentialsId: 'devtest', usernameVariable: 'GIT_USERNAME', passwordVariable: 'GIT_TOKEN')]) {
-                            bat "docker run --rm -v ${DOCKER_VOLUME}:/app ${BE_IMAGE} sh -c \"git clone -b ${BRANCH} https://%GIT_USERNAME%:%GIT_TOKEN%@github.com/bienxhuy/quotie.git /app/dev-instance\""
-                        }
+                        bat "docker run --rm -v ${DOCKER_VOLUME}:/app ${BE_IMAGE} sh -c \"git clone -b ${BRANCH} https://github.com/bienxhuy/quotie.git /app/dev-instance\""
                         echo 'Repository cloned into named volume successfully.'
                         echo '-----------------------------------'
                     }
@@ -125,7 +123,7 @@ pipeline {
                         echo "INFLUXDB_HOST:                ${INFLUXDB_HOST}"
                         echo "INFLUXDB_DATABASE:            ${INFLUXDB_DATABASE}"
                         echo '-----------------------------------'
-                        bat "docker run -d --name ${TEST_CONTAINER} --network ${DOCKER_NETWORK} -e BE_URL=${BE_URL} -e FE_URL=${FE_URL} -e BROWSER=${BROWSER} -e LOG_DIR=${FRAMEWORK_LOG_DIR} -e SCREENSHOT_DIR=${FRAMEWORK_SCREENSHOT_DIR} -e UNIT_JUNIT_PATH=${UNIT_JUNIT_PATH} -e API_JUNIT_PATH=${API_JUNIT_PATH} -e E2E_JUNIT_PATH=${E2E_JUNIT_PATH} -e PERF_SEEDED_USER_EMAIL=${PERF_SEEDED_USER_EMAIL} -e PERF_SEEDED_USER_PASSWORD=${PERF_SEEDED_USER_PASSWORD} -e PERFORMANCE_RUN_TIME=${PERFORMANCE_RUN_TIME} -e PERFORMANCE_USERS=${PERFORMANCE_USERS} -e PERFORMANCE_SPAWN_RATE=${PERFORMANCE_SPAWN_RATE} -e TIMESTAMP=${TIMESTAMP} -e INFLUX_HOST=${INFLUXDB_HOST} -e INFLUX_TOKEN=%INFLUXDB_TOKEN% -e INFLUX_DATABASE=${INFLUXDB_DATABASE} -e BUILD_NUMBER=${env.BUILD_NUMBER} -e BUILD_URL=${env.BUILD_URL} -e BRANCH=${env.BRANCH} -e AUTHOR=${env.AUTHOR} -e HOST=${env.HOST} -w /app python-chrome tail -f /dev/null"
+                        bat "docker run -d --name ${TEST_CONTAINER} --network ${DOCKER_NETWORK} -e BE_URL=${BE_URL} -e FE_URL=${FE_URL} -e BROWSER=${BROWSER} -e LOG_DIR=${FRAMEWORK_LOG_DIR} -e SCREENSHOT_DIR=${FRAMEWORK_SCREENSHOT_DIR} -e UNIT_JUNIT_PATH=${UNIT_JUNIT_PATH} -e API_JUNIT_PATH=${API_JUNIT_PATH} -e E2E_JUNIT_PATH=${E2E_JUNIT_PATH} -e PERF_SEEDED_USER_EMAIL=${PERF_SEEDED_USER_EMAIL} -e PERF_SEEDED_USER_PASSWORD=${PERF_SEEDED_USER_PASSWORD} -e PERFORMANCE_RUN_TIME=${PERFORMANCE_RUN_TIME} -e PERFORMANCE_USERS=${PERFORMANCE_USERS} -e PERFORMANCE_SPAWN_RATE=${PERFORMANCE_SPAWN_RATE} -e TIMESTAMP=${TIMESTAMP} -e INFLUX_HOST=${INFLUXDB_HOST} -e INFLUX_TOKEN=%INFLUXDB_TOKEN% -e INFLUX_DATABASE=${INFLUXDB_DATABASE} -e BUILD_NUMBER=${env.BUILD_NUMBER} -e BUILD_URL=${env.BUILD_URL} -e BRANCH=${env.BRANCH} -e AUTHOR=${env.AUTHOR} -e HOST=${env.HOST} -w /app pythonwdriver:chrome tail -f /dev/null"
                         echo 'Test instance container started successfully.'
                         echo '-----------------------------------'
 
@@ -133,9 +131,7 @@ pipeline {
                         echo '-----------------------------------'
                         echo "TEST_CONTAINER:    ${TEST_CONTAINER}"
                         echo '-----------------------------------'
-                        withCredentials([usernamePassword(credentialsId: 'devtest', usernameVariable: 'GIT_USERNAME', passwordVariable: 'GIT_TOKEN')]) {
-                            bat "docker exec ${TEST_CONTAINER} git clone -b change_sut https://%GIT_USERNAME%:%GIT_TOKEN%@github.com/bienxhuy/devtest.git /app/devtest"
-                        }
+                        bat "docker exec ${TEST_CONTAINER} git clone -b main https://github.com/bienxhuy/devtest.git /app/devtest"
                         echo 'Test framework repository cloned successfully.'
                         echo '-----------------------------------'
                     }

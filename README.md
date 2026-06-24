@@ -69,6 +69,8 @@ GitHub Push / Manual Trigger / Cron
 
 ## Host Requirements
 
+**IMPORTANT:** This infrastucture is able to run on Windows only for now (Author development environment)
+
 The following must be installed and running on the host machine before using this repository, the exact version that the author used will also be shown:
 
 - Docker Engine (v28.3.2)
