@@ -8,9 +8,9 @@ This directory contains Dockerfiles for building Python base images with a pre-i
 
 | Dockerfile | Browser | Driver |
 |------------|---------|--------|
-| `chrome.Dockerfile` | Google Chrome (stable) | ChromeDriver (version-matched automatically) |
+| `chrome.Dockerfile` | Google Chrome (stable) | ChromeDriver |
 
-Additional browser images (e.g., Firefox) can be added as separate Dockerfiles following the same naming convention.
+Additional browser images can be added later as separate Dockerfiles following the same naming convention.
 
 ---
 
@@ -22,14 +22,6 @@ Additional browser images (e.g., Firefox) can be added as separate Dockerfiles f
 cd pythonwdriver
 docker build -f chrome.Dockerfile -t pythonwdriver:chrome .
 ```
-
-The build process:
-1. Starts from `python:3.12`.
-2. Installs Google Chrome stable from the official Google repository.
-3. Detects the installed Chrome major version and downloads the matching ChromeDriver automatically.
-4. Installs `pytest` and `selenium` as base packages.
-
-> The image does not pin a specific Chrome or ChromeDriver version. It resolves the latest stable version at build time. Rebuild the image periodically or when the Chrome version on the host drifts significantly from the image.
 
 ---
 

@@ -30,6 +30,3 @@ RUN CHROME_VERSION=$(google-chrome-stable --version | grep -oE '[0-9]+' | head -
     && mv /usr/local/bin/chromedriver-linux64/chromedriver /usr/local/bin/chromedriver \
     && rm -rf chromedriver-linux64 chromedriver-linux64.zip \
     && chmod +x /usr/local/bin/chromedriver
-
-# Add pytest and pytest-selenium
-RUN pip install --no-cache-dir pytest selenium
