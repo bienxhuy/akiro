@@ -387,8 +387,8 @@ pipeline {
             // Copy artifacts from test container to Jenkins workspace before stopping the container
             echo 'Copying logs and screenshots from test container to Jenkins workspace...'
             echo '-----------------------------------'
-            bat "mkdir %WORKSPACE%\\devtest"
             catchError(buildResult: 'UNSTABLE', stageResult: 'UNSTABLE') {
+                bat "mkdir %WORKSPACE%\\devtest"
                 bat "docker cp ${TEST_CONTAINER}:/app/devtest/reports %WORKSPACE%\\devtest\\reports"
             }
 
