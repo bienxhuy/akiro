@@ -27,8 +27,13 @@ services:
     container_name: grafana
     ports:
       - "9090:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=akiro
+      - GF_SECURITY_ADMIN_PASSWORD=akiro2026
     volumes:
       - ./grafana:/var/lib/grafana
+    depends_on:
+      - influxdb3
     restart: unless-stopped
 
   devpi:
