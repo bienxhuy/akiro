@@ -56,3 +56,25 @@ Repeat for all five JSON files. The recommended import order follows the navigat
 3. `xml-suite-detail.json`
 4. `performance-detail.json`
 5. `test-detail.json`
+
+## Appendix
+
+**Home detail page**
+
+![Home detail page](../.images/dashboard-home-page.png)
+
+**Build detail page**
+
+![Build detail page](../.images/dashboard-build-detail-page.png)
+
+**XML suite detail page**
+
+![XML suite detail page](../.images/dashboard-suite-detail-page.png)
+
+**Perfomance detail page**
+
+![Perfomance detail page](../.images/dashboard-perf-detail-page.png)
+
+**Failed test detail page**
+
+![Failed test detail page](../.images/dashboard-test-detail-page.png)
